@@ -9,9 +9,9 @@ export const metadata: Metadata = {
   title: 'CNC KPI 관리 시스템',
   description: 'ALMUS TECH CNC 작업자 KPI 관리 시스템',
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: '/A symbol BLUE-02.png',
+    shortcut: '/A symbol BLUE-02.png',
+    apple: '/A symbol BLUE-02.png',
   },
   manifest: '/site.webmanifest',
 };
