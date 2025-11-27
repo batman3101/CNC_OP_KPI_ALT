@@ -1,0 +1,388 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* MUI Dashboard Theme - CSS Variables */
+:root {
+  /* Primary Colors - Navy Blue */
+  --color-primary: #000080;
+  --color-primary-light: #3333a3;
+  --color-primary-dark: #000066;
+  --color-primary-bg: #e8e8ff;
+
+  /* Semantic Colors */
+  --color-success: #2e7d32;
+  --color-success-bg: #edf7ed;
+  --color-warning: #ed6c02;
+  --color-warning-bg: #fff4e5;
+  --color-error: #d32f2f;
+  --color-error-bg: #fdeded;
+  --color-info: #0288d1;
+  --color-info-bg: #e5f6fd;
+
+  /* Background */
+  --color-bg-default: #f5f5f5;
+  --color-bg-paper: #ffffff;
+  --color-bg-elevated: #ffffff;
+
+  /* Text */
+  --color-text-primary: rgba(0, 0, 0, 0.87);
+  --color-text-secondary: rgba(0, 0, 0, 0.6);
+  --color-text-disabled: rgba(0, 0, 0, 0.38);
+
+  /* Border & Divider */
+  --color-border: rgba(0, 0, 0, 0.12);
+  --color-divider: rgba(0, 0, 0, 0.12);
+
+  /* Shadows */
+  --shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Transitions */
+  --transition-fast: 200ms;
+  --transition-normal: 300ms;
+  --transition-slow: 375ms;
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Mode CSS Variables */
+.dark {
+  /* Primary Colors - Navy Blue (Bright) */
+  --color-primary: #6b6bff;
+  --color-primary-light: #9999ff;
+  --color-primary-dark: #4040cc;
+  --color-primary-bg: rgba(107, 107, 255, 0.12);
+
+  /* Semantic Colors */
+  --color-success: #66bb6a;
+  --color-success-bg: rgba(46, 125, 50, 0.12);
+  --color-warning: #ffa726;
+  --color-warning-bg: rgba(237, 108, 2, 0.12);
+  --color-error: #f44336;
+  --color-error-bg: rgba(211, 47, 47, 0.12);
+  --color-info: #29b6f6;
+  --color-info-bg: rgba(2, 136, 209, 0.12);
+
+  /* Background */
+  --color-bg-default: #121212;
+  --color-bg-paper: #1e1e1e;
+  --color-bg-elevated: #242424;
+
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-disabled: rgba(255, 255, 255, 0.5);
+
+  /* Border & Divider */
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-divider: rgba(255, 255, 255, 0.12);
+
+  /* Shadows (Darker) */
+  --shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.2), 0px 1px 2px rgba(0, 0, 0, 0.14);
+  --shadow-md: 0px 4px 6px -1px rgba(0, 0, 0, 0.3), 0px 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0px 10px 15px -3px rgba(0, 0, 0, 0.4), 0px 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Base Styles */
+body {
+  background: var(--color-bg-default);
+  color: var(--color-text-primary);
+  font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  transition: background-color var(--transition-normal) var(--ease-in-out),
+              color var(--transition-normal) var(--ease-in-out);
+}
+
+/* Smooth theme transitions */
+*, *::before, *::after {
+  transition: background-color var(--transition-normal) var(--ease-in-out),
+              border-color var(--transition-normal) var(--ease-in-out),
+              box-shadow var(--transition-normal) var(--ease-in-out);
+}
+
+/* Ant Design Theme Overrides - Light Mode */
+.ant-layout {
+  background: var(--color-bg-default) !important;
+}
+
+.ant-layout-content {
+  background: var(--color-bg-default) !important;
+}
+
+.ant-card {
+  background: var(--color-bg-paper);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.ant-btn-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.ant-btn-primary:hover {
+  background: var(--color-primary-light) !important;
+  border-color: var(--color-primary-light) !important;
+}
+
+/* Ant Design Theme Overrides - Dark Mode */
+.dark .ant-layout {
+  background: var(--color-bg-default) !important;
+}
+
+.dark .ant-layout-content {
+  background: var(--color-bg-default) !important;
+}
+
+.dark .ant-layout-sider {
+  background: var(--color-bg-paper) !important;
+}
+
+.dark .ant-menu-dark,
+.dark .ant-menu-dark .ant-menu-sub {
+  background: var(--color-bg-paper) !important;
+}
+
+.dark .ant-card {
+  background: var(--color-bg-paper);
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.dark .ant-table {
+  background: var(--color-bg-paper);
+}
+
+.dark .ant-table-thead > tr > th {
+  background: var(--color-bg-elevated) !important;
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+.dark .ant-table-tbody > tr > td {
+  border-color: var(--color-border);
+  background: var(--color-bg-paper);
+}
+
+.dark .ant-table-tbody > tr:hover > td {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .ant-table-row-selected > td {
+  background: rgba(107, 107, 255, 0.16) !important;
+}
+
+.dark .ant-modal-content {
+  background: var(--color-bg-paper);
+}
+
+.dark .ant-modal-header {
+  background: var(--color-bg-paper);
+  border-color: var(--color-border);
+}
+
+.dark .ant-modal-footer {
+  border-color: var(--color-border);
+}
+
+.dark .ant-input,
+.dark .ant-input-affix-wrapper,
+.dark .ant-select-selector,
+.dark .ant-picker {
+  background: var(--color-bg-paper) !important;
+  border-color: var(--color-border) !important;
+}
+
+.dark .ant-input:hover,
+.dark .ant-input-affix-wrapper:hover,
+.dark .ant-select-selector:hover,
+.dark .ant-picker:hover {
+  border-color: var(--color-primary) !important;
+}
+
+.dark .ant-select-dropdown,
+.dark .ant-picker-dropdown,
+.dark .ant-dropdown-menu {
+  background: var(--color-bg-elevated);
+}
+
+.dark .ant-tabs-tab {
+  color: var(--color-text-secondary);
+}
+
+.dark .ant-tabs-tab-active {
+  color: var(--color-primary);
+}
+
+.dark .ant-tabs-ink-bar {
+  background: var(--color-primary);
+}
+
+.dark .ant-alert {
+  border-color: var(--color-border);
+}
+
+.dark .ant-form-item-label > label {
+  color: var(--color-text-primary);
+}
+
+.dark .ant-statistic-title {
+  color: var(--color-text-secondary);
+}
+
+.dark .ant-statistic-content {
+  color: var(--color-text-primary);
+}
+
+.dark .ant-popover-inner {
+  background: var(--color-bg-elevated);
+}
+
+.dark .ant-popconfirm-message-title {
+  color: var(--color-text-primary);
+}
+
+/* Custom Scrollbar - Light */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Custom Scrollbar - Dark */
+.dark ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* KPI Card Styles */
+.kpi-card {
+  transition: transform var(--transition-fast) var(--ease-in-out),
+              box-shadow var(--transition-fast) var(--ease-in-out);
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Chart Container */
+.chart-container {
+  background: var(--color-bg-paper);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+/* Stats Card Colors */
+.stats-card-blue {
+  background: linear-gradient(135deg, #e8e8ff 0%, #d0d0ff 100%);
+}
+
+.dark .stats-card-blue {
+  background: linear-gradient(135deg, rgba(107, 107, 255, 0.2) 0%, rgba(107, 107, 255, 0.1) 100%);
+}
+
+.stats-card-green {
+  background: linear-gradient(135deg, #edf7ed 0%, #c8e6c9 100%);
+}
+
+.dark .stats-card-green {
+  background: linear-gradient(135deg, rgba(102, 187, 106, 0.2) 0%, rgba(102, 187, 106, 0.1) 100%);
+}
+
+.stats-card-orange {
+  background: linear-gradient(135deg, #fff4e5 0%, #ffe0b2 100%);
+}
+
+.dark .stats-card-orange {
+  background: linear-gradient(135deg, rgba(255, 167, 38, 0.2) 0%, rgba(255, 167, 38, 0.1) 100%);
+}
+
+.stats-card-red {
+  background: linear-gradient(135deg, #fdeded 0%, #ffcdd2 100%);
+}
+
+.dark .stats-card-red {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.2) 0%, rgba(244, 67, 54, 0.1) 100%);
+}
+
+/* Loading Skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.12) 50%,
+    rgba(0, 0, 0, 0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 25%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.06) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* Text Selection */
+::selection {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.dark ::selection {
+  background: rgba(107, 107, 255, 0.3);
+  color: var(--color-primary);
+}
+
+/* Focus Ring */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .ant-layout-sider,
+  .ant-layout-header {
+    display: none !important;
+  }
+}

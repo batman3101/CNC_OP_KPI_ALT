@@ -1,0 +1,87 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Next.js
+.next/
+out/
+build/
+
+# Production
+dist/
+
+# Environment files (보안)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Security files (보안 관련 파일)
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.json
+client_secret.json
+*-service-account.json
+cnc-op-kpi-management-*.json
+secrets/
+.secrets/
+
+# API Keys & Tokens
+*.token
+api-key*
+serviceAccountKey.json
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+*.code-workspace
+
+# Cache
+.cache/
+cache/
+*.cache
+.eslintcache
+
+# Logs
+logs/
+*.log
+
+# Backup
+*.bak
+*.backup
+
+# Python (이전 프로젝트)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.streamlit/
