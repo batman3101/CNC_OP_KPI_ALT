@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card,
   Tabs,
@@ -34,7 +34,7 @@ export default function AdminPage() {
   const [searchedColumn, setSearchedColumn] = useState('');
   const searchInput = useRef<InputRef>(null);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -50,7 +50,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -58,7 +58,7 @@ export default function AdminPage() {
     } else {
       setLoading(false);
     }
-  }, [isAdmin]);
+  }, [isAdmin, fetchUsers]);
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     if (values.password !== values.confirmPassword) {

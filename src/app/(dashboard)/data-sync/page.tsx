@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card,
   Tabs,
@@ -66,7 +66,7 @@ export default function DataSyncPage() {
   const [searchedColumn, setSearchedColumn] = useState('');
   const searchInput = useRef<InputRef>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
       const [workersRes, modelsRes, productionRes, usersRes] = await Promise.all([
@@ -88,9 +88,9 @@ export default function DataSyncPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
-  const fetchProductionData = async () => {
+  const fetchProductionData = useCallback(async () => {
     try {
       const startDate = dateRange[0].format('YYYY-MM-DD');
       const endDate = dateRange[1].format('YYYY-MM-DD');
@@ -108,7 +108,7 @@ export default function DataSyncPage() {
       console.error('Error fetching production data:', error);
       message.error(t('error_occurred'));
     }
-  };
+  }, [dateRange, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -117,13 +117,13 @@ export default function DataSyncPage() {
     } else {
       setLoading(false);
     }
-  }, [isAdmin]);
+  }, [isAdmin, fetchStats, fetchProductionData]);
 
   useEffect(() => {
     if (isAdmin) {
       fetchProductionData();
     }
-  }, [dateRange]);
+  }, [isAdmin, fetchProductionData]);
 
   const handleExportProduction = () => {
     if (productionData.length === 0) {
@@ -337,11 +337,11 @@ export default function DataSyncPage() {
   });
 
   // 필터 옵션
-  const lineFilters = [...new Set(productionData.map((d) => d.라인번호).filter(Boolean))].map((line) => ({
+  const lineFilters = Array.from(new Set(productionData.map((d) => d.라인번호).filter(Boolean))).map((line) => ({
     text: line,
     value: line,
   }));
-  const workerFilters = [...new Set(productionData.map((d) => d.작업자).filter(Boolean))].map((worker) => ({
+  const workerFilters = Array.from(new Set(productionData.map((d) => d.작업자).filter(Boolean))).map((worker) => ({
     text: worker,
     value: worker,
   }));

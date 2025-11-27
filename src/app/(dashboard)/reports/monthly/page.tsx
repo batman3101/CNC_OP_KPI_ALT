@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, DatePicker, Spin, Row, Col, Table, message, Button, Input, Space, InputRef } from 'antd';
 import type { ColumnType, FilterConfirmProps } from 'antd/es/table/interface';
 import { DownloadOutlined, SearchOutlined } from '@ant-design/icons';
@@ -25,7 +25,7 @@ export default function MonthlyReportPage() {
   const startOfMonth = selectedMonth.startOf('month');
   const endOfMonth = selectedMonth.endOf('month');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const startDate = startOfMonth.format('YYYY-MM-DD');
@@ -46,11 +46,11 @@ export default function MonthlyReportPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startOfMonth, endOfMonth, t]);
 
   useEffect(() => {
     fetchData();
-  }, [selectedMonth]);
+  }, [fetchData]);
 
   const kpis = calculateKPIs(data);
   const workerStats = calculateWorkerStats(data);
@@ -138,7 +138,7 @@ export default function MonthlyReportPage() {
   });
 
   // 필터 옵션
-  const lineFilters = [...new Set(workerStats.map((w) => w.line).filter(Boolean))].map((line) => ({
+  const lineFilters = Array.from(new Set(workerStats.map((w) => w.line).filter(Boolean))).map((line) => ({
     text: line,
     value: line,
   }));

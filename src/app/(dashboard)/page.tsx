@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Select, DatePicker, Button, Statistic, Spin, message } from 'antd';
 import { ReloadOutlined, DownloadOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
@@ -26,7 +26,7 @@ export default function DashboardPage() {
   const [selectedLine, setSelectedLine] = useState<string>('all');
   const [lines, setLines] = useState<string[]>([]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const startDate = dateRange[0].format('YYYY-MM-DD');
@@ -49,7 +49,7 @@ export default function DashboardPage() {
       setData(productionData || []);
 
       // 라인 목록 추출
-      const uniqueLines = [...new Set((productionData || []).map((item) => item.라인번호))].sort();
+      const uniqueLines = Array.from(new Set((productionData || []).map((item) => item.라인번호))).sort();
       setLines(uniqueLines);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -57,11 +57,11 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange, selectedLine, t]);
 
   useEffect(() => {
     fetchData();
-  }, [dateRange, selectedLine]);
+  }, [fetchData]);
 
   const kpis = calculateKPIs(data);
   const lineStats = calculateLineStats(data);

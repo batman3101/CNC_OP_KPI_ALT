@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card,
   Tabs,
@@ -44,7 +44,7 @@ export default function ProductionPage() {
   const [searchedColumn, setSearchedColumn] = useState('');
   const searchInput = useRef<InputRef>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const startDate = dateRange[0].format('YYYY-MM-DD');
@@ -70,11 +70,11 @@ export default function ProductionPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange, t]);
 
   useEffect(() => {
     fetchData();
-  }, [dateRange]);
+  }, [fetchData]);
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     try {
@@ -157,7 +157,7 @@ export default function ProductionPage() {
     }
   };
 
-  const lines = [...new Set(workers.map((w) => w.라인번호))].sort();
+  const lines = Array.from(new Set(workers.map((w) => w.라인번호))).sort();
 
   // 검색 기능
   const handleSearch = (
@@ -237,11 +237,11 @@ export default function ProductionPage() {
 
   // 필터 옵션
   const lineFilters = lines.map((line) => ({ text: line, value: line }));
-  const workerFilters = [...new Set(data.map((d) => d.작업자).filter(Boolean))].map((worker) => ({
+  const workerFilters = Array.from(new Set(data.map((d) => d.작업자).filter(Boolean))).map((worker) => ({
     text: worker,
     value: worker,
   }));
-  const modelFilters = [...new Set(data.map((d) => d.모델차수).filter(Boolean))].map((model) => ({
+  const modelFilters = Array.from(new Set(data.map((d) => d.모델차수).filter(Boolean))).map((model) => ({
     text: model,
     value: model,
   }));

@@ -21,7 +21,7 @@ ChartJS.register(
 );
 
 interface BarChartProps {
-  data: Record<string, unknown>[];
+  data: object[];
   xKey: string;
   yKeys: string[];
   labels: string[];
@@ -38,10 +38,10 @@ export default function BarChart({
   horizontal = false,
 }: BarChartProps) {
   const chartData = {
-    labels: data.map((item) => item[xKey] as string),
+    labels: data.map((item) => (item as Record<string, unknown>)[xKey] as string),
     datasets: yKeys.map((key, index) => ({
       label: labels[index],
-      data: data.map((item) => item[key] as number),
+      data: data.map((item) => (item as Record<string, unknown>)[key] as number),
       backgroundColor: colors[index],
       borderRadius: 4,
     })),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card,
   Tabs,
@@ -33,7 +33,7 @@ export default function WorkersPage() {
   const [searchedColumn, setSearchedColumn] = useState('');
   const searchInput = useRef<InputRef>(null);
 
-  const fetchWorkers = async () => {
+  const fetchWorkers = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -49,11 +49,11 @@ export default function WorkersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchWorkers();
-  }, []);
+  }, [fetchWorkers]);
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     try {
@@ -124,7 +124,7 @@ export default function WorkersPage() {
     }
   };
 
-  const lines = [...new Set(workers.map((w) => w.라인번호))].sort();
+  const lines = Array.from(new Set(workers.map((w) => w.라인번호))).sort();
 
   // 검색 기능
   const handleSearch = (
@@ -204,7 +204,7 @@ export default function WorkersPage() {
 
   // 필터 옵션
   const lineFilters = lines.map((line) => ({ text: line, value: line }));
-  const departmentFilters = [...new Set(workers.map((w) => w.부서).filter(Boolean))].map((dept) => ({
+  const departmentFilters = Array.from(new Set(workers.map((w) => w.부서).filter(Boolean))).map((dept) => ({
     text: dept,
     value: dept,
   }));

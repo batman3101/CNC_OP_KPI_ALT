@@ -126,7 +126,6 @@ const getMuiThemeConfig = (mode: ThemeMode): ThemeConfig => {
       motionDurationSlow: '375ms',
       motionEaseInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
       motionEaseOut: 'cubic-bezier(0.0, 0, 0.2, 1)',
-      motionEaseIn: 'cubic-bezier(0.4, 0, 1, 1)',
 
       // Control
       controlHeight: 40,

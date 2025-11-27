@@ -139,7 +139,7 @@ export function getSorter<T>(dataIndex: keyof T, type: 'string' | 'number' | 'da
 
 // 필터 옵션 생성 함수
 export function getUniqueFilters<T>(data: T[], dataIndex: keyof T): { text: string; value: string }[] {
-  const unique = [...new Set(data.map((item) => item[dataIndex]).filter(Boolean))];
+  const unique = Array.from(new Set(data.map((item) => item[dataIndex]).filter(Boolean)));
   return unique.map((value) => ({
     text: String(value),
     value: String(value),

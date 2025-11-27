@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card,
   Tabs,
@@ -30,7 +30,7 @@ export default function ModelsPage() {
   const [searchedColumn, setSearchedColumn] = useState('');
   const searchInput = useRef<InputRef>(null);
 
-  const fetchModels = async () => {
+  const fetchModels = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -46,11 +46,11 @@ export default function ModelsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchModels();
-  }, []);
+  }, [fetchModels]);
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     try {
@@ -169,7 +169,7 @@ export default function ModelsPage() {
   });
 
   // 필터 옵션
-  const processFilters = [...new Set(models.map((m) => m.process).filter(Boolean))].map((proc) => ({
+  const processFilters = Array.from(new Set(models.map((m) => m.process).filter(Boolean))).map((proc) => ({
     text: proc,
     value: proc,
   }));

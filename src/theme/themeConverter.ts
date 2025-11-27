@@ -112,7 +112,6 @@ export function convertToAntdTheme(mode: ThemeMode): ThemeConfig {
       motionDurationSlow: `${muiTheme.transitions.duration.complex}ms`,
       motionEaseInOut: muiTheme.transitions.easing.easeInOut,
       motionEaseOut: muiTheme.transitions.easing.easeOut,
-      motionEaseIn: muiTheme.transitions.easing.easeIn,
 
       // Z-Index
       zIndexPopupBase: muiTheme.zIndex.modal,

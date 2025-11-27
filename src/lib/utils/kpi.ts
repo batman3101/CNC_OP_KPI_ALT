@@ -1,5 +1,8 @@
 import { Production, KPIData, WorkerStats } from '@/types';
 
+// Re-export WorkerStats for convenience
+export type { WorkerStats };
+
 // KPI 목표값 상수
 export const KPI_TARGETS = {
   ACHIEVEMENT_RATE: 96, // 목표 달성률 96%

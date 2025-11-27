@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, DatePicker, Spin, Row, Col, Table, message, Input, Space, InputRef, Button } from 'antd';
 import type { ColumnType, FilterConfirmProps } from 'antd/es/table/interface';
 import { DownloadOutlined, SearchOutlined } from '@ant-design/icons';
@@ -22,7 +22,7 @@ export default function DailyReportPage() {
   const [searchedColumn, setSearchedColumn] = useState('');
   const searchInput = useRef<InputRef>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const dateStr = selectedDate.format('YYYY-MM-DD');
@@ -41,11 +41,11 @@ export default function DailyReportPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate, t]);
 
   useEffect(() => {
     fetchData();
-  }, [selectedDate]);
+  }, [fetchData]);
 
   const kpis = calculateKPIs(data);
   const workerStats = calculateWorkerStats(data);
@@ -133,7 +133,7 @@ export default function DailyReportPage() {
   });
 
   // 필터 옵션
-  const lineFilters = [...new Set(workerStats.map((w) => w.line).filter(Boolean))].map((line) => ({
+  const lineFilters = Array.from(new Set(workerStats.map((w) => w.line).filter(Boolean))).map((line) => ({
     text: line,
     value: line,
   }));

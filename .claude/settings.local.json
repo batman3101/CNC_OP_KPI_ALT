@@ -12,7 +12,9 @@
       "Bash(git branch:*)",
       "Bash(git push:*)",
       "Bash(npm install:*)",
-      "Bash(dir \"c:\\WORK\\app_management\\CNC_OP_KPI_V2\\public\")"
+      "Bash(dir \"c:\\WORK\\app_management\\CNC_OP_KPI_V2\\public\")",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": [],
     "ask": []

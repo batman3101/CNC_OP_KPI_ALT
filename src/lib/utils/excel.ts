@@ -4,7 +4,7 @@ import { Production, WorkerStats } from '@/types';
 /**
  * 데이터를 엑셀 파일로 내보내기
  */
-export function exportToExcel<T extends Record<string, unknown>>(
+export function exportToExcel<T extends object>(
   data: T[],
   filename: string
 ): void {

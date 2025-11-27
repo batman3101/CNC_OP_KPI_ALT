@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, DatePicker, Spin, Row, Col, Table, message, Button, Input, Space, InputRef } from 'antd';
 import type { ColumnType, FilterConfirmProps } from 'antd/es/table/interface';
 import { DownloadOutlined, SearchOutlined } from '@ant-design/icons';
@@ -28,7 +28,7 @@ export default function WeeklyReportPage() {
   const startOfWeek = selectedWeek.startOf('week');
   const endOfWeek = selectedWeek.endOf('week');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const startDate = startOfWeek.format('YYYY-MM-DD');
@@ -49,11 +49,11 @@ export default function WeeklyReportPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startOfWeek, endOfWeek, t]);
 
   useEffect(() => {
     fetchData();
-  }, [selectedWeek]);
+  }, [fetchData]);
 
   const kpis = calculateKPIs(data);
   const workerStats = calculateWorkerStats(data);
@@ -141,7 +141,7 @@ export default function WeeklyReportPage() {
   });
 
   // 필터 옵션
-  const lineFilters = [...new Set(workerStats.map((w) => w.line).filter(Boolean))].map((line) => ({
+  const lineFilters = Array.from(new Set(workerStats.map((w) => w.line).filter(Boolean))).map((line) => ({
     text: line,
     value: line,
   }));
