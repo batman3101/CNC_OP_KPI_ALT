@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Tabs,
@@ -12,8 +12,11 @@ import {
   message,
   Space,
   Spin,
+  InputRef,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import type { ColumnType, FilterConfirmProps } from 'antd/es/table/interface';
+import { PlusOutlined, DeleteOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import Highlighter from 'react-highlight-words';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase/client';
 import { Model } from '@/types';
@@ -23,6 +26,9 @@ export default function ModelsPage() {
   const [loading, setLoading] = useState(true);
   const [models, setModels] = useState<Model[]>([]);
   const [form] = Form.useForm();
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
 
   const fetchModels = async () => {
     setLoading(true);
@@ -86,9 +92,104 @@ export default function ModelsPage() {
     }
   };
 
-  const columns = [
-    { title: t('model_name'), dataIndex: 'model', key: 'model' },
-    { title: t('process'), dataIndex: 'process', key: 'process' },
+  // 검색 기능
+  const handleSearch = (
+    selectedKeys: string[],
+    confirm: (param?: FilterConfirmProps) => void,
+    dataIndex: string,
+  ) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: () => void) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const getColumnSearchProps = (dataIndex: keyof Model, title: string): ColumnType<Model> => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+        <Input
+          ref={searchInput}
+          placeholder={`${title} ${t('search_keyword')}`}
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('search_keyword')}
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('reset_filter')}
+          </Button>
+          <Button type="link" size="small" onClick={() => close()}>
+            {t('close')}
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+    ),
+    onFilter: (value, record) => {
+      const recordValue = record[dataIndex];
+      if (recordValue == null) return false;
+      return recordValue.toString().toLowerCase().includes((value as string).toLowerCase());
+    },
+    onFilterDropdownOpenChange: (visible) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
+
+  // 필터 옵션
+  const processFilters = [...new Set(models.map((m) => m.process).filter(Boolean))].map((proc) => ({
+    text: proc,
+    value: proc,
+  }));
+
+  const columns: ColumnType<Model>[] = [
+    {
+      title: t('model_name'),
+      dataIndex: 'model',
+      key: 'model',
+      sorter: (a, b) => (a.model || '').localeCompare(b.model || ''),
+      ...getColumnSearchProps('model', t('model_name')),
+    },
+    {
+      title: t('process'),
+      dataIndex: 'process',
+      key: 'process',
+      sorter: (a, b) => (a.process || '').localeCompare(b.process || ''),
+      filters: processFilters,
+      onFilter: (value, record) => record.process === value,
+    },
     {
       title: '',
       key: 'actions',
@@ -131,7 +232,12 @@ export default function ModelsPage() {
               dataSource={models}
               columns={columns}
               rowKey="id"
-              pagination={{ pageSize: 10 }}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+              }}
             />
           )}
         </Card>
@@ -149,14 +255,14 @@ export default function ModelsPage() {
                 label={t('model_name')}
                 rules={[{ required: true }]}
               >
-                <Input placeholder="모델명을 입력하세요" />
+                <Input placeholder={t('enter_model_name')} />
               </Form.Item>
               <Form.Item
                 name="process"
                 label={t('process')}
                 rules={[{ required: true }]}
               >
-                <Input placeholder="공정을 입력하세요" />
+                <Input placeholder={t('enter_process')} />
               </Form.Item>
             </div>
             <Button type="primary" htmlType="submit" icon={<PlusOutlined />}>

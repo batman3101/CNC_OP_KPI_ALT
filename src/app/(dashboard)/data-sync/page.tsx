@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Tabs,
@@ -16,14 +16,19 @@ import {
   Col,
   Popconfirm,
   DatePicker,
+  Input,
+  InputRef,
 } from 'antd';
+import type { ColumnType, FilterConfirmProps } from 'antd/es/table/interface';
 import {
   DownloadOutlined,
   UploadOutlined,
   DatabaseOutlined,
   DeleteOutlined,
   ReloadOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
+import Highlighter from 'react-highlight-words';
 import dayjs, { Dayjs } from 'dayjs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,6 +62,9 @@ export default function DataSyncPage() {
     dayjs().endOf('year'),
   ]);
   const [uploading, setUploading] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -207,7 +215,7 @@ export default function DataSyncPage() {
         }
       }
 
-      message.success(`${successCount}개 데이터 추가 완료, ${errorCount}개 실패`);
+      message.success(`${successCount} ${t('import_success')}, ${errorCount} ${t('import_failed')}`);
       fetchProductionData();
       fetchStats();
     } catch (error) {
@@ -228,7 +236,7 @@ export default function DataSyncPage() {
 
       if (error) throw error;
 
-      message.success(`${months}개월 이전 데이터가 삭제되었습니다.`);
+      message.success(`${months} ${t('data_deleted_months')}`);
       fetchStats();
       fetchProductionData();
     } catch (error) {
@@ -252,20 +260,154 @@ export default function DataSyncPage() {
     );
   }
 
-  const columns = [
-    { title: t('date'), dataIndex: '날짜', key: 'date', width: 120 },
-    { title: t('worker'), dataIndex: '작업자', key: 'worker', width: 150 },
-    { title: t('line'), dataIndex: '라인번호', key: 'line', width: 100 },
-    { title: t('model'), dataIndex: '모델차수', key: 'model', width: 150 },
-    { title: t('target_quantity'), dataIndex: '목표수량', key: 'target', width: 100 },
-    { title: t('production_quantity'), dataIndex: '생산수량', key: 'production', width: 100 },
-    { title: t('defect_quantity'), dataIndex: '불량수량', key: 'defect', width: 100 },
+  // 검색 기능
+  const handleSearch = (
+    selectedKeys: string[],
+    confirm: (param?: FilterConfirmProps) => void,
+    dataIndex: string,
+  ) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: () => void) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const getColumnSearchProps = (dataIndex: keyof Production, title: string): ColumnType<Production> => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+        <Input
+          ref={searchInput}
+          placeholder={`${title} ${t('search_keyword')}`}
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('search_keyword')}
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('reset_filter')}
+          </Button>
+          <Button type="link" size="small" onClick={() => close()}>
+            {t('close')}
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+    ),
+    onFilter: (value, record) => {
+      const recordValue = record[dataIndex];
+      if (recordValue == null) return false;
+      return recordValue.toString().toLowerCase().includes((value as string).toLowerCase());
+    },
+    onFilterDropdownOpenChange: (visible) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
+
+  // 필터 옵션
+  const lineFilters = [...new Set(productionData.map((d) => d.라인번호).filter(Boolean))].map((line) => ({
+    text: line,
+    value: line,
+  }));
+  const workerFilters = [...new Set(productionData.map((d) => d.작업자).filter(Boolean))].map((worker) => ({
+    text: worker,
+    value: worker,
+  }));
+
+  const columns: ColumnType<Production>[] = [
+    {
+      title: t('date'),
+      dataIndex: '날짜',
+      key: 'date',
+      width: 120,
+      sorter: (a, b) => (a.날짜 || '').localeCompare(b.날짜 || ''),
+      defaultSortOrder: 'descend',
+    },
+    {
+      title: t('worker'),
+      dataIndex: '작업자',
+      key: 'worker',
+      width: 150,
+      sorter: (a, b) => (a.작업자 || '').localeCompare(b.작업자 || ''),
+      filters: workerFilters,
+      onFilter: (value, record) => record.작업자 === value,
+      ...getColumnSearchProps('작업자', t('worker')),
+    },
+    {
+      title: t('line'),
+      dataIndex: '라인번호',
+      key: 'line',
+      width: 100,
+      sorter: (a, b) => (a.라인번호 || '').localeCompare(b.라인번호 || ''),
+      filters: lineFilters,
+      onFilter: (value, record) => record.라인번호 === value,
+    },
+    {
+      title: t('model'),
+      dataIndex: '모델차수',
+      key: 'model',
+      width: 150,
+      sorter: (a, b) => (a.모델차수 || '').localeCompare(b.모델차수 || ''),
+    },
+    {
+      title: t('target_quantity'),
+      dataIndex: '목표수량',
+      key: 'target',
+      width: 100,
+      sorter: (a, b) => (a.목표수량 || 0) - (b.목표수량 || 0),
+    },
+    {
+      title: t('production_quantity'),
+      dataIndex: '생산수량',
+      key: 'production',
+      width: 100,
+      sorter: (a, b) => (a.생산수량 || 0) - (b.생산수량 || 0),
+    },
+    {
+      title: t('defect_quantity'),
+      dataIndex: '불량수량',
+      key: 'defect',
+      width: 100,
+      sorter: (a, b) => (a.불량수량 || 0) - (b.불량수량 || 0),
+    },
   ];
 
   const tabItems = [
     {
       key: 'overview',
-      label: '데이터베이스 현황',
+      label: t('database_status'),
       children: (
         <div className="space-y-6">
           <Row gutter={[16, 16]}>
@@ -275,7 +417,7 @@ export default function DataSyncPage() {
                   title={t('worker_management')}
                   value={stats.workers}
                   prefix={<DatabaseOutlined />}
-                  suffix="명"
+                  suffix={t('unit_people')}
                 />
               </Card>
             </Col>
@@ -285,7 +427,7 @@ export default function DataSyncPage() {
                   title={t('model_management')}
                   value={stats.models}
                   prefix={<DatabaseOutlined />}
-                  suffix="개"
+                  suffix={t('unit_items')}
                 />
               </Card>
             </Col>
@@ -295,7 +437,7 @@ export default function DataSyncPage() {
                   title={t('production_management')}
                   value={stats.production}
                   prefix={<DatabaseOutlined />}
-                  suffix="건"
+                  suffix={t('unit_records')}
                 />
               </Card>
             </Col>
@@ -305,13 +447,13 @@ export default function DataSyncPage() {
                   title={t('user_management')}
                   value={stats.users}
                   prefix={<DatabaseOutlined />}
-                  suffix="명"
+                  suffix={t('unit_people')}
                 />
               </Card>
             </Col>
           </Row>
 
-          <Card title="데이터 새로고침">
+          <Card title={t('data_refresh')}>
             <Button icon={<ReloadOutlined />} onClick={() => { fetchStats(); fetchProductionData(); }}>
               {t('refresh')}
             </Button>
@@ -324,7 +466,7 @@ export default function DataSyncPage() {
       label: t('export_excel'),
       children: (
         <div className="space-y-4">
-          <Card title="생산 실적 내보내기">
+          <Card title={t('export_production')}>
             <Space direction="vertical" className="w-full">
               <RangePicker
                 value={dateRange}
@@ -335,8 +477,8 @@ export default function DataSyncPage() {
                 }}
               />
               <p className="text-gray-500">
-                선택된 기간: {dateRange[0].format('YYYY-MM-DD')} ~ {dateRange[1].format('YYYY-MM-DD')}
-                ({productionData.length}건)
+                {t('selected_period')}: {dateRange[0].format('YYYY-MM-DD')} ~ {dateRange[1].format('YYYY-MM-DD')}
+                ({productionData.length} {t('unit_records')})
               </p>
               <Button
                 type="primary"
@@ -344,56 +486,56 @@ export default function DataSyncPage() {
                 onClick={handleExportProduction}
                 disabled={productionData.length === 0}
               >
-                생산 실적 Excel 다운로드
+                {t('download_production_excel')}
               </Button>
             </Space>
           </Card>
 
-          <Card title="마스터 데이터 내보내기">
+          <Card title={t('export_master_data')}>
             <Space>
               <Button icon={<DownloadOutlined />} onClick={handleExportWorkers}>
-                작업자 목록 Excel
+                {t('download_workers_excel')}
               </Button>
               <Button icon={<DownloadOutlined />} onClick={handleExportModels}>
-                모델 목록 Excel
+                {t('download_models_excel')}
               </Button>
             </Space>
           </Card>
 
-          <Card title="데이터 미리보기">
+          <Card title={t('data_preview')}>
             <Table
-              dataSource={productionData.slice(0, 10)}
+              dataSource={productionData}
               columns={columns}
               rowKey="id"
-              pagination={false}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+              }}
               scroll={{ x: 900 }}
               size="small"
             />
-            {productionData.length > 10 && (
-              <p className="text-gray-500 mt-2">
-                외 {productionData.length - 10}건...
-              </p>
-            )}
           </Card>
         </div>
       ),
     },
     {
       key: 'import',
-      label: '데이터 가져오기',
+      label: t('data_import'),
       children: (
         <div className="space-y-4">
           <Alert
-            message="주의"
-            description="Excel 파일을 통해 데이터를 가져올 때 중복 데이터가 추가될 수 있습니다. 가져오기 전에 데이터를 확인해주세요."
+            message={t('caution')}
+            description={t('import_caution_desc')}
             type="warning"
             showIcon
           />
 
-          <Card title="생산 실적 가져오기">
+          <Card title={t('import_production')}>
             <Space direction="vertical">
               <p className="text-gray-600">
-                Excel 파일 형식: 날짜, 작업자, 라인번호, 모델차수, 목표수량, 생산수량, 불량수량, 특이사항
+                {t('excel_format_desc')}
               </p>
               <Upload
                 accept=".xlsx,.xls"
@@ -404,7 +546,7 @@ export default function DataSyncPage() {
                 }}
               >
                 <Button icon={<UploadOutlined />} loading={uploading}>
-                  Excel 파일 선택
+                  {t('select_excel_file')}
                 </Button>
               </Upload>
             </Space>
@@ -414,32 +556,32 @@ export default function DataSyncPage() {
     },
     {
       key: 'cleanup',
-      label: '데이터 정리',
+      label: t('data_cleanup'),
       children: (
         <div className="space-y-4">
           <Alert
-            message="경고"
-            description="데이터 삭제는 되돌릴 수 없습니다. 삭제 전 반드시 백업을 진행해주세요."
+            message={t('warning')}
+            description={t('delete_warning_desc')}
             type="error"
             showIcon
           />
 
-          <Card title="오래된 데이터 삭제">
+          <Card title={t('delete_old_data')}>
             <Space>
               <Popconfirm
-                title="정말로 6개월 이전 데이터를 삭제하시겠습니까?"
+                title={t('confirm_delete_6months')}
                 onConfirm={() => handleDeleteOldData(6)}
               >
                 <Button danger icon={<DeleteOutlined />}>
-                  6개월 이전 데이터 삭제
+                  {t('delete_6months_data')}
                 </Button>
               </Popconfirm>
               <Popconfirm
-                title="정말로 1년 이전 데이터를 삭제하시겠습니까?"
+                title={t('confirm_delete_1year')}
                 onConfirm={() => handleDeleteOldData(12)}
               >
                 <Button danger icon={<DeleteOutlined />}>
-                  1년 이전 데이터 삭제
+                  {t('delete_1year_data')}
                 </Button>
               </Popconfirm>
             </Space>

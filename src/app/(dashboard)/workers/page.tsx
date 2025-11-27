@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Tabs,
@@ -13,8 +13,11 @@ import {
   message,
   Space,
   Spin,
+  InputRef,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import type { ColumnType, FilterConfirmProps } from 'antd/es/table/interface';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import Highlighter from 'react-highlight-words';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase/client';
 import { Worker } from '@/types';
@@ -26,6 +29,9 @@ export default function WorkersPage() {
   const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
 
   const fetchWorkers = async () => {
     setLoading(true);
@@ -120,11 +126,124 @@ export default function WorkersPage() {
 
   const lines = [...new Set(workers.map((w) => w.라인번호))].sort();
 
-  const columns = [
-    { title: t('employee_id'), dataIndex: '사번', key: 'employeeId', width: 120 },
-    { title: t('name'), dataIndex: '이름', key: 'name', width: 150 },
-    { title: t('department'), dataIndex: '부서', key: 'department', width: 100 },
-    { title: t('line_number'), dataIndex: '라인번호', key: 'lineNumber', width: 100 },
+  // 검색 기능
+  const handleSearch = (
+    selectedKeys: string[],
+    confirm: (param?: FilterConfirmProps) => void,
+    dataIndex: string,
+  ) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: () => void) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const getColumnSearchProps = (dataIndex: keyof Worker, title: string): ColumnType<Worker> => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+        <Input
+          ref={searchInput}
+          placeholder={`${title} ${t('search_keyword')}`}
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('search_keyword')}
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('reset_filter')}
+          </Button>
+          <Button type="link" size="small" onClick={() => close()}>
+            {t('close')}
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+    ),
+    onFilter: (value, record) => {
+      const recordValue = record[dataIndex];
+      if (recordValue == null) return false;
+      return recordValue.toString().toLowerCase().includes((value as string).toLowerCase());
+    },
+    onFilterDropdownOpenChange: (visible) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
+
+  // 필터 옵션
+  const lineFilters = lines.map((line) => ({ text: line, value: line }));
+  const departmentFilters = [...new Set(workers.map((w) => w.부서).filter(Boolean))].map((dept) => ({
+    text: dept,
+    value: dept,
+  }));
+
+  const columns: ColumnType<Worker>[] = [
+    {
+      title: t('employee_id'),
+      dataIndex: '사번',
+      key: 'employeeId',
+      width: 120,
+      sorter: (a, b) => (a.사번 || '').localeCompare(b.사번 || ''),
+      ...getColumnSearchProps('사번', t('employee_id')),
+    },
+    {
+      title: t('name'),
+      dataIndex: '이름',
+      key: 'name',
+      width: 150,
+      sorter: (a, b) => (a.이름 || '').localeCompare(b.이름 || ''),
+      ...getColumnSearchProps('이름', t('name')),
+    },
+    {
+      title: t('department'),
+      dataIndex: '부서',
+      key: 'department',
+      width: 100,
+      sorter: (a, b) => (a.부서 || '').localeCompare(b.부서 || ''),
+      filters: departmentFilters,
+      onFilter: (value, record) => record.부서 === value,
+    },
+    {
+      title: t('line_number'),
+      dataIndex: '라인번호',
+      key: 'lineNumber',
+      width: 100,
+      sorter: (a, b) => (a.라인번호 || '').localeCompare(b.라인번호 || ''),
+      filters: lineFilters,
+      onFilter: (value, record) => record.라인번호 === value,
+    },
     {
       title: '',
       key: 'actions',
@@ -179,7 +298,12 @@ export default function WorkersPage() {
             dataSource={workers}
             columns={columns}
             rowKey="id"
-            pagination={{ pageSize: 10 }}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+            }}
           />
         </Card>
       ),

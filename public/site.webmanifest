@@ -1,0 +1,16 @@
+{
+  "name": "CNC Operator KPI Management",
+  "short_name": "CNC KPI",
+  "description": "CNC Operator Key Performance Indicator Management System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1890ff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

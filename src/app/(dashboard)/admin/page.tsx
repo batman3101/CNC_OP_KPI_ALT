@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Tabs,
@@ -14,8 +14,11 @@ import {
   Space,
   Spin,
   Alert,
+  InputRef,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import type { ColumnType, FilterConfirmProps } from 'antd/es/table/interface';
+import Highlighter from 'react-highlight-words';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase/client';
@@ -27,6 +30,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [form] = Form.useForm();
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -105,6 +111,82 @@ export default function AdminPage() {
     }
   };
 
+  // 검색 기능
+  const handleSearch = (
+    selectedKeys: string[],
+    confirm: (param?: FilterConfirmProps) => void,
+    dataIndex: string,
+  ) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: () => void) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const getColumnSearchProps = (dataIndex: keyof User, title: string): ColumnType<User> => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+        <Input
+          ref={searchInput}
+          placeholder={`${title} ${t('search_keyword')}`}
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('search_keyword')}
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('reset_filter')}
+          </Button>
+          <Button type="link" size="small" onClick={() => close()}>
+            {t('close')}
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+    ),
+    onFilter: (value, record) => {
+      const recordValue = record[dataIndex];
+      if (recordValue == null) return false;
+      return recordValue.toString().toLowerCase().includes((value as string).toLowerCase());
+    },
+    onFilterDropdownOpenChange: (visible) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
+
   if (!isAdmin) {
     return (
       <div className="p-6">
@@ -128,10 +210,35 @@ export default function AdminPage() {
   const adminUsers = users.filter((u) => u.권한 === '관리자');
   const normalUsers = users.filter((u) => u.권한 === '사용자');
 
-  const columns = [
-    { title: t('email'), dataIndex: '이메일', key: 'email' },
-    { title: t('name'), dataIndex: '이름', key: 'name' },
-    { title: t('role'), dataIndex: '권한', key: 'role' },
+  // 필터 옵션
+  const roleFilters = [
+    { text: '관리자', value: '관리자' },
+    { text: '사용자', value: '사용자' },
+  ];
+
+  const columns: ColumnType<User>[] = [
+    {
+      title: t('email'),
+      dataIndex: '이메일',
+      key: 'email',
+      sorter: (a, b) => (a.이메일 || '').localeCompare(b.이메일 || ''),
+      ...getColumnSearchProps('이메일', t('email')),
+    },
+    {
+      title: t('name'),
+      dataIndex: '이름',
+      key: 'name',
+      sorter: (a, b) => (a.이름 || '').localeCompare(b.이름 || ''),
+      ...getColumnSearchProps('이름', t('name')),
+    },
+    {
+      title: t('role'),
+      dataIndex: '권한',
+      key: 'role',
+      sorter: (a, b) => (a.권한 || '').localeCompare(b.권한 || ''),
+      filters: roleFilters,
+      onFilter: (value, record) => record.권한 === value,
+    },
     {
       title: '',
       key: 'actions',
@@ -173,7 +280,12 @@ export default function AdminPage() {
               dataSource={adminUsers}
               columns={columns}
               rowKey="id"
-              pagination={false}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+              }}
             />
           )}
         </Card>
@@ -198,7 +310,12 @@ export default function AdminPage() {
               dataSource={normalUsers}
               columns={columns}
               rowKey="id"
-              pagination={{ pageSize: 10 }}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+              }}
             />
           )}
         </Card>

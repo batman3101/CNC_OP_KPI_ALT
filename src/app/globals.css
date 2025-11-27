@@ -242,6 +242,26 @@ body {
   color: var(--color-text-primary);
 }
 
+/* Ant Design Tooltip - Light Mode */
+.ant-tooltip .ant-tooltip-inner {
+  background-color: rgba(0, 0, 0, 0.85);
+  color: #ffffff;
+}
+
+.ant-tooltip .ant-tooltip-arrow::before {
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
+/* Ant Design Tooltip - Dark Mode */
+.dark .ant-tooltip .ant-tooltip-inner {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #000000;
+}
+
+.dark .ant-tooltip .ant-tooltip-arrow::before {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
 /* Custom Scrollbar - Light */
 ::-webkit-scrollbar {
   width: 8px;

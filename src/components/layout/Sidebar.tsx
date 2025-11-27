@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Layout, Menu } from 'antd';
 import {
   DashboardOutlined,
@@ -112,13 +113,21 @@ export default function Sidebar({ collapsed }: SidebarProps) {
       trigger={null}
       collapsible
       collapsed={collapsed}
+      width={320}
       className="min-h-screen"
       style={{ background: '#001529' }}
     >
-      <div className="h-16 flex items-center justify-center border-b border-gray-700">
-        <span className="text-white font-bold text-lg">
-          {collapsed ? 'KPI' : 'CNC KPI'}
-        </span>
+      <div className="h-16 flex items-center justify-center gap-2 border-b border-gray-700 px-2">
+        <Image
+          src="/A symbol BLUE-02.png"
+          alt="ALMUS"
+          width={32}
+          height={32}
+          className="rounded-full"
+        />
+        {!collapsed && (
+          <span className="text-white font-bold text-lg">CNC OP KPI</span>
+        )}
       </div>
       <Menu
         theme="dark"

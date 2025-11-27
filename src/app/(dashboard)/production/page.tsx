@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Tabs,
@@ -15,8 +15,11 @@ import {
   message,
   Space,
   Spin,
+  InputRef,
 } from 'antd';
+import type { ColumnType, FilterConfirmProps } from 'antd/es/table/interface';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import Highlighter from 'react-highlight-words';
 import dayjs, { Dayjs } from 'dayjs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase/client';
@@ -37,6 +40,9 @@ export default function ProductionPage() {
     dayjs().endOf('month'),
   ]);
   const [form] = Form.useForm();
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -153,18 +159,160 @@ export default function ProductionPage() {
 
   const lines = [...new Set(workers.map((w) => w.라인번호))].sort();
 
-  const columns = [
-    { title: t('date'), dataIndex: '날짜', key: 'date', width: 120 },
-    { title: t('worker'), dataIndex: '작업자', key: 'worker', width: 150 },
-    { title: t('line'), dataIndex: '라인번호', key: 'line', width: 100 },
-    { title: t('model'), dataIndex: '모델차수', key: 'model', width: 150 },
-    { title: t('target_quantity'), dataIndex: '목표수량', key: 'target', width: 100 },
-    { title: t('production_quantity'), dataIndex: '생산수량', key: 'production', width: 100 },
-    { title: t('defect_quantity'), dataIndex: '불량수량', key: 'defect', width: 100 },
+  // 검색 기능
+  const handleSearch = (
+    selectedKeys: string[],
+    confirm: (param?: FilterConfirmProps) => void,
+    dataIndex: string,
+  ) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: () => void) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const getColumnSearchProps = (dataIndex: keyof Production, title: string): ColumnType<Production> => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+        <Input
+          ref={searchInput}
+          placeholder={`${title} ${t('search_keyword')}`}
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('search_keyword')}
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('reset_filter')}
+          </Button>
+          <Button type="link" size="small" onClick={() => close()}>
+            {t('close')}
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+    ),
+    onFilter: (value, record) => {
+      const recordValue = record[dataIndex];
+      if (recordValue == null) return false;
+      return recordValue.toString().toLowerCase().includes((value as string).toLowerCase());
+    },
+    onFilterDropdownOpenChange: (visible) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
+
+  // 필터 옵션
+  const lineFilters = lines.map((line) => ({ text: line, value: line }));
+  const workerFilters = [...new Set(data.map((d) => d.작업자).filter(Boolean))].map((worker) => ({
+    text: worker,
+    value: worker,
+  }));
+  const modelFilters = [...new Set(data.map((d) => d.모델차수).filter(Boolean))].map((model) => ({
+    text: model,
+    value: model,
+  }));
+
+  const columns: ColumnType<Production>[] = [
+    {
+      title: t('date'),
+      dataIndex: '날짜',
+      key: 'date',
+      width: 120,
+      sorter: (a, b) => (a.날짜 || '').localeCompare(b.날짜 || ''),
+      defaultSortOrder: 'descend',
+    },
+    {
+      title: t('worker'),
+      dataIndex: '작업자',
+      key: 'worker',
+      width: 150,
+      sorter: (a, b) => (a.작업자 || '').localeCompare(b.작업자 || ''),
+      filters: workerFilters,
+      onFilter: (value, record) => record.작업자 === value,
+      ...getColumnSearchProps('작업자', t('worker')),
+    },
+    {
+      title: t('line'),
+      dataIndex: '라인번호',
+      key: 'line',
+      width: 100,
+      sorter: (a, b) => (a.라인번호 || '').localeCompare(b.라인번호 || ''),
+      filters: lineFilters,
+      onFilter: (value, record) => record.라인번호 === value,
+    },
+    {
+      title: t('model'),
+      dataIndex: '모델차수',
+      key: 'model',
+      width: 150,
+      sorter: (a, b) => (a.모델차수 || '').localeCompare(b.모델차수 || ''),
+      filters: modelFilters,
+      onFilter: (value, record) => record.모델차수 === value,
+    },
+    {
+      title: t('target_quantity'),
+      dataIndex: '목표수량',
+      key: 'target',
+      width: 100,
+      sorter: (a, b) => (a.목표수량 || 0) - (b.목표수량 || 0),
+    },
+    {
+      title: t('production_quantity'),
+      dataIndex: '생산수량',
+      key: 'production',
+      width: 100,
+      sorter: (a, b) => (a.생산수량 || 0) - (b.생산수량 || 0),
+    },
+    {
+      title: t('defect_quantity'),
+      dataIndex: '불량수량',
+      key: 'defect',
+      width: 100,
+      sorter: (a, b) => (a.불량수량 || 0) - (b.불량수량 || 0),
+    },
     {
       title: t('achievement_rate'),
       key: 'achievement',
       width: 100,
+      sorter: (a, b) => {
+        const rateA = a.목표수량 > 0 ? (a.생산수량 / a.목표수량) * 100 : 0;
+        const rateB = b.목표수량 > 0 ? (b.생산수량 / b.목표수량) * 100 : 0;
+        return rateA - rateB;
+      },
       render: (_: unknown, record: Production) =>
         record.목표수량 > 0
           ? `${((record.생산수량 / record.목표수량) * 100).toFixed(1)}%`
@@ -325,7 +473,12 @@ export default function ProductionPage() {
               dataSource={data}
               columns={columns}
               rowKey="id"
-              pagination={{ pageSize: 10 }}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+              }}
               scroll={{ x: 1000 }}
             />
           </Card>

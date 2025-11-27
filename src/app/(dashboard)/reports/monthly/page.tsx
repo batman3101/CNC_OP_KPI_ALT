@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, DatePicker, Spin, Row, Col, Table, message, Button } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
+import { useState, useEffect, useRef } from 'react';
+import { Card, DatePicker, Spin, Row, Col, Table, message, Button, Input, Space, InputRef } from 'antd';
+import type { ColumnType, FilterConfirmProps } from 'antd/es/table/interface';
+import { DownloadOutlined, SearchOutlined } from '@ant-design/icons';
+import Highlighter from 'react-highlight-words';
 import dayjs, { Dayjs } from 'dayjs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase/client';
 import { Production } from '@/types';
-import { calculateKPIs, calculateWorkerStats, calculateLineStats, KPI_TARGETS } from '@/lib/utils/kpi';
+import { calculateKPIs, calculateWorkerStats, calculateLineStats, KPI_TARGETS, WorkerStats } from '@/lib/utils/kpi';
 import BarChart from '@/components/charts/BarChart';
 import { exportProductionToExcel } from '@/lib/utils/excel';
 
@@ -16,6 +18,9 @@ export default function MonthlyReportPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Production[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<Dayjs>(dayjs());
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
 
   const startOfMonth = selectedMonth.startOf('month');
   const endOfMonth = selectedMonth.endOf('month');
@@ -56,22 +61,134 @@ export default function MonthlyReportPage() {
     message.success(t('export_excel') + ' ' + t('complete'));
   };
 
-  const columns = [
-    { title: t('worker'), dataIndex: 'worker', key: 'worker' },
-    { title: t('line'), dataIndex: 'line', key: 'line' },
-    { title: t('target_quantity'), dataIndex: 'totalTarget', key: 'target' },
-    { title: t('production_quantity'), dataIndex: 'totalProduction', key: 'production' },
-    { title: t('defect_quantity'), dataIndex: 'totalDefects', key: 'defects' },
+  // 검색 기능
+  const handleSearch = (
+    selectedKeys: string[],
+    confirm: (param?: FilterConfirmProps) => void,
+    dataIndex: string,
+  ) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: () => void) => {
+    clearFilters();
+    setSearchText('');
+  };
+
+  const getColumnSearchProps = (dataIndex: keyof WorkerStats, title: string): ColumnType<WorkerStats> => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+        <Input
+          ref={searchInput}
+          placeholder={`${title} ${t('search_keyword')}`}
+          value={selectedKeys[0]}
+          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+          style={{ marginBottom: 8, display: 'block' }}
+        />
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => handleSearch(selectedKeys as string[], confirm, dataIndex as string)}
+            icon={<SearchOutlined />}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('search_keyword')}
+          </Button>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
+            {t('reset_filter')}
+          </Button>
+          <Button type="link" size="small" onClick={() => close()}>
+            {t('close')}
+          </Button>
+        </Space>
+      </div>
+    ),
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+    ),
+    onFilter: (value, record) => {
+      const recordValue = record[dataIndex];
+      if (recordValue == null) return false;
+      return recordValue.toString().toLowerCase().includes((value as string).toLowerCase());
+    },
+    onFilterDropdownOpenChange: (visible) => {
+      if (visible) {
+        setTimeout(() => searchInput.current?.select(), 100);
+      }
+    },
+    render: (text) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text ? text.toString() : ''}
+        />
+      ) : (
+        text
+      ),
+  });
+
+  // 필터 옵션
+  const lineFilters = [...new Set(workerStats.map((w) => w.line).filter(Boolean))].map((line) => ({
+    text: line,
+    value: line,
+  }));
+
+  const columns: ColumnType<WorkerStats>[] = [
+    {
+      title: t('worker'),
+      dataIndex: 'worker',
+      key: 'worker',
+      sorter: (a, b) => (a.worker || '').localeCompare(b.worker || ''),
+      ...getColumnSearchProps('worker', t('worker')),
+    },
+    {
+      title: t('line'),
+      dataIndex: 'line',
+      key: 'line',
+      sorter: (a, b) => (a.line || '').localeCompare(b.line || ''),
+      filters: lineFilters,
+      onFilter: (value, record) => record.line === value,
+    },
+    {
+      title: t('target_quantity'),
+      dataIndex: 'totalTarget',
+      key: 'target',
+      sorter: (a, b) => (a.totalTarget || 0) - (b.totalTarget || 0),
+    },
+    {
+      title: t('production_quantity'),
+      dataIndex: 'totalProduction',
+      key: 'production',
+      sorter: (a, b) => (a.totalProduction || 0) - (b.totalProduction || 0),
+    },
+    {
+      title: t('defect_quantity'),
+      dataIndex: 'totalDefects',
+      key: 'defects',
+      sorter: (a, b) => (a.totalDefects || 0) - (b.totalDefects || 0),
+    },
     {
       title: t('achievement_rate'),
       dataIndex: 'achievementRate',
       key: 'achievement',
+      sorter: (a, b) => (a.achievementRate || 0) - (b.achievementRate || 0),
       render: (value: number) => `${value.toFixed(1)}%`,
     },
     {
       title: t('work_efficiency'),
       dataIndex: 'efficiencyRate',
       key: 'efficiency',
+      sorter: (a, b) => (a.efficiencyRate || 0) - (b.efficiencyRate || 0),
       render: (value: number) => `${value.toFixed(1)}%`,
     },
   ];
@@ -158,7 +275,12 @@ export default function MonthlyReportPage() {
               dataSource={workerStats}
               columns={columns}
               rowKey="worker"
-              pagination={{ pageSize: 10 }}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+              }}
             />
           </Card>
         </>
