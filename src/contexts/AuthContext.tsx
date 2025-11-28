@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           user,
           isAuthenticated: true,
           isLoading: false,
-          isAdmin: user.권한 === '관리자',
+          isAdmin: true, // 모든 사용자에게 관리자 권한 부여
         });
       } catch {
         localStorage.removeItem('user');
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           user,
           isAuthenticated: true,
           isLoading: false,
-          isAdmin: user.권한 === '관리자',
+          isAdmin: true, // 모든 사용자에게 관리자 권한 부여
         });
         return true;
       }

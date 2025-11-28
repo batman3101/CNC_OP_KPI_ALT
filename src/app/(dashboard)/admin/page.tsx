@@ -26,7 +26,7 @@ import { User } from '@/types';
 
 export default function AdminPage() {
   const { t } = useLanguage();
-  const { isAdmin, user } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [form] = Form.useForm();
@@ -53,12 +53,8 @@ export default function AdminPage() {
   }, [t]);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchUsers();
-    } else {
-      setLoading(false);
-    }
-  }, [isAdmin, fetchUsers]);
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     if (values.password !== values.confirmPassword) {
@@ -187,18 +183,6 @@ export default function AdminPage() {
       ),
   });
 
-  if (!isAdmin) {
-    return (
-      <div className="p-6">
-        <Alert
-          message={t('admin_required')}
-          type="warning"
-          showIcon
-        />
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -212,8 +196,8 @@ export default function AdminPage() {
 
   // 필터 옵션
   const roleFilters = [
-    { text: '관리자', value: '관리자' },
-    { text: '사용자', value: '사용자' },
+    { text: t('role_admin'), value: '관리자' },
+    { text: t('role_user'), value: '사용자' },
   ];
 
   const columns: ColumnType<User>[] = [
@@ -366,8 +350,8 @@ export default function AdminPage() {
               </Form.Item>
               <Form.Item name="role" label={t('role')}>
                 <Select>
-                  <Select.Option value="관리자">관리자</Select.Option>
-                  <Select.Option value="사용자">사용자</Select.Option>
+                  <Select.Option value="관리자">{t('role_admin')}</Select.Option>
+                  <Select.Option value="사용자">{t('role_user')}</Select.Option>
                 </Select>
               </Form.Item>
             </div>

@@ -263,5 +263,8 @@
   "delete_1year_data": "Xóa dữ liệu cũ hơn 1 năm",
   "import_success": "dữ liệu đã thêm thành công",
   "import_failed": "thất bại",
-  "data_deleted_months": "tháng dữ liệu cũ đã được xóa."
+  "data_deleted_months": "tháng dữ liệu cũ đã được xóa.",
+  "role_admin": "Quản trị viên",
+  "role_user": "Người dùng",
+  "sidebar_title": "CNC OP KPI"
 }

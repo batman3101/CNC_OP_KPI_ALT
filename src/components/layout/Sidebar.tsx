@@ -14,7 +14,6 @@ import {
   CalendarOutlined,
 } from '@ant-design/icons';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
 
 const { Sider } = Layout;
 
@@ -24,46 +23,44 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed }: SidebarProps) {
   const { t } = useLanguage();
-  const { isAdmin } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
-  const adminMenuItems = isAdmin
-    ? [
+  // 모든 사용자에게 관리자 메뉴 표시
+  const adminMenuItems = [
+    {
+      key: 'admin-group',
+      icon: <SettingOutlined />,
+      label: t('admin_menu'),
+      children: [
         {
-          key: 'admin-group',
-          icon: <SettingOutlined />,
-          label: t('admin_menu'),
-          children: [
-            {
-              key: '/admin',
-              icon: <UserOutlined />,
-              label: t('admin_user_management'),
-            },
-            {
-              key: '/workers',
-              icon: <TeamOutlined />,
-              label: t('worker_management'),
-            },
-            {
-              key: '/models',
-              icon: <AppstoreOutlined />,
-              label: t('model_management'),
-            },
-            {
-              key: '/production',
-              icon: <DatabaseOutlined />,
-              label: t('production_management'),
-            },
-            {
-              key: '/data-sync',
-              icon: <DatabaseOutlined />,
-              label: t('data_management'),
-            },
-          ],
+          key: '/admin',
+          icon: <UserOutlined />,
+          label: t('admin_user_management'),
         },
-      ]
-    : [];
+        {
+          key: '/workers',
+          icon: <TeamOutlined />,
+          label: t('worker_management'),
+        },
+        {
+          key: '/models',
+          icon: <AppstoreOutlined />,
+          label: t('model_management'),
+        },
+        {
+          key: '/production',
+          icon: <DatabaseOutlined />,
+          label: t('production_management'),
+        },
+        {
+          key: '/data-sync',
+          icon: <DatabaseOutlined />,
+          label: t('data_management'),
+        },
+      ],
+    },
+  ];
 
   const reportMenuItems = [
     {
@@ -126,7 +123,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
           className="rounded-full"
         />
         {!collapsed && (
-          <span className="text-white font-bold text-lg">CNC OP KPI</span>
+          <span className="text-white font-bold text-lg">{t('sidebar_title')}</span>
         )}
       </div>
       <Menu

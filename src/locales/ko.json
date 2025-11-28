@@ -263,5 +263,8 @@
   "delete_1year_data": "1년 이전 데이터 삭제",
   "import_success": "개 데이터 추가 완료",
   "import_failed": "개 실패",
-  "data_deleted_months": "개월 이전 데이터가 삭제되었습니다."
+  "data_deleted_months": "개월 이전 데이터가 삭제되었습니다.",
+  "role_admin": "관리자",
+  "role_user": "사용자",
+  "sidebar_title": "CNC OP KPI"
 }

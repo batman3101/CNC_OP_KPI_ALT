@@ -31,7 +31,6 @@ import {
 import Highlighter from 'react-highlight-words';
 import dayjs, { Dayjs } from 'dayjs';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase/client';
 import { Production, Worker, Model } from '@/types';
 import { exportProductionToExcel } from '@/lib/utils/excel';
@@ -48,7 +47,6 @@ interface DatabaseStats {
 
 export default function DataSyncPage() {
   const { t } = useLanguage();
-  const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DatabaseStats>({
     workers: 0,
@@ -111,19 +109,9 @@ export default function DataSyncPage() {
   }, [dateRange, t]);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchStats();
-      fetchProductionData();
-    } else {
-      setLoading(false);
-    }
-  }, [isAdmin, fetchStats, fetchProductionData]);
-
-  useEffect(() => {
-    if (isAdmin) {
-      fetchProductionData();
-    }
-  }, [isAdmin, fetchProductionData]);
+    fetchStats();
+    fetchProductionData();
+  }, [fetchStats, fetchProductionData]);
 
   const handleExportProduction = () => {
     if (productionData.length === 0) {
@@ -243,14 +231,6 @@ export default function DataSyncPage() {
       message.error(t('error_occurred'));
     }
   };
-
-  if (!isAdmin) {
-    return (
-      <div className="p-6">
-        <Alert message={t('admin_required')} type="warning" showIcon />
-      </div>
-    );
-  }
 
   if (loading) {
     return (
