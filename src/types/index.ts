@@ -4,7 +4,7 @@ export interface User {
   이메일: string;
   비밀번호: string;
   이름: string;
-  권한: '관리자' | '사용자';
+  권한: string;
 }
 
 export interface LoginCredentials {

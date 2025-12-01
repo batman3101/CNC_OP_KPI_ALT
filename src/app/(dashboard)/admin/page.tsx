@@ -195,7 +195,7 @@ export default function AdminPage() {
   const normalUsers = users.filter((u) => u.권한 !== '관리자' && u.권한 !== 'admin');
 
   // 필터 옵션 - Supabase에 있는 모든 권한 타입 포함
-  const uniqueRoles = [...new Set(users.map(u => u.권한).filter(Boolean))];
+  const uniqueRoles = Array.from(new Set(users.map(u => u.권한).filter(Boolean)));
   const roleFilters = uniqueRoles.map(role => ({ text: role, value: role }));
 
   const columns: ColumnType<User>[] = [
