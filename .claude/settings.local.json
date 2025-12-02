@@ -15,7 +15,9 @@
       "Bash(dir \"c:\\WORK\\app_management\\CNC_OP_KPI_V2\\public\")",
       "Bash(npm run build:*)",
       "Bash(npm run lint:*)",
-      "Bash(del \"c:\\WORK\\app_management\\CNC_OP_KPI_V2\\src\\locales\\en.json\")"
+      "Bash(del \"c:\\WORK\\app_management\\CNC_OP_KPI_V2\\src\\locales\\en.json\")",
+      "Bash(dir \"C:\\WORK\\app_management\\CNC_OP_KPI_V2\\src\" /s /b)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

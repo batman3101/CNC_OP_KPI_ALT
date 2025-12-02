@@ -259,16 +259,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 로컬 스토리지에서 테마 복원
-    const savedTheme = localStorage.getItem('theme') as ThemeMode;
-    if (savedTheme) {
-      setThemeState(savedTheme);
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    try {
+      const savedTheme = localStorage.getItem('theme') as ThemeMode;
+      if (savedTheme) {
+        setThemeState(savedTheme);
+        document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+      }
+    } catch {
+      // localStorage 접근 불가
     }
   }, []);
 
   const setTheme = (newTheme: ThemeMode) => {
     setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
+    try {
+      localStorage.setItem('theme', newTheme);
+    } catch {
+      // localStorage 접근 불가
+    }
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 

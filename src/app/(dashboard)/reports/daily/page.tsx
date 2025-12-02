@@ -252,18 +252,30 @@ export default function DailyReportPage() {
           {/* 최고 성과자 */}
           <Card title={t('best_performer')}>
             <Row gutter={[16, 16]}>
-              {bestPerformers.map((performer, index) => (
-                <Col xs={24} md={8} key={performer.worker}>
-                  <div className={`p-4 rounded-lg text-center ${index === 0 ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'}`}>
-                    <span className="text-2xl">{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</span>
-                    <h4 className="font-bold mt-2">{performer.worker}</h4>
-                    <p className="text-gray-600">{performer.line}</p>
-                    <p className="text-lg font-semibold text-primary-500">
-                      {performer.achievementRate.toFixed(1)}%
-                    </p>
-                  </div>
-                </Col>
-              ))}
+              {[0, 1, 2].map((index) => {
+                const performer = bestPerformers[index];
+                return (
+                  <Col xs={24} md={8} key={index}>
+                    <div className={`p-6 rounded-lg text-center min-h-[160px] flex flex-col justify-center ${index === 0 ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'}`}>
+                      {performer ? (
+                        <>
+                          <span className="text-4xl">{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</span>
+                          <h4 className="font-bold mt-3 text-xl">{performer.worker}</h4>
+                          <p className="text-gray-600 text-lg">{performer.line}</p>
+                          <p className="text-2xl font-bold text-blue-600 mt-2">
+                            {performer.achievementRate.toFixed(1)}%
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-4xl">{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</span>
+                          <p className="text-gray-400 mt-3 text-lg">-</p>
+                        </>
+                      )}
+                    </div>
+                  </Col>
+                );
+              })}
             </Row>
           </Card>
 

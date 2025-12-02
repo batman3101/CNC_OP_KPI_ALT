@@ -10,7 +10,7 @@ import weekOfYear from 'dayjs/plugin/weekOfYear';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase/client';
 import { Production } from '@/types';
-import { calculateKPIs, calculateWorkerStats, calculateLineStats, KPI_TARGETS, WorkerStats } from '@/lib/utils/kpi';
+import { calculateKPIs, calculateWorkerStats, calculateLineStats, findBestPerformers, KPI_TARGETS, WorkerStats } from '@/lib/utils/kpi';
 import BarChart from '@/components/charts/BarChart';
 import { exportProductionToExcel } from '@/lib/utils/excel';
 
@@ -31,8 +31,8 @@ export default function WeeklyReportPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const startDate = startOfWeek.format('YYYY-MM-DD');
-      const endDate = endOfWeek.format('YYYY-MM-DD');
+      const startDate = selectedWeek.startOf('week').format('YYYY-MM-DD');
+      const endDate = selectedWeek.endOf('week').format('YYYY-MM-DD');
 
       const { data: productionData, error } = await supabase
         .from('Production')
@@ -49,7 +49,7 @@ export default function WeeklyReportPage() {
     } finally {
       setLoading(false);
     }
-  }, [startOfWeek, endOfWeek, t]);
+  }, [selectedWeek, t]);
 
   useEffect(() => {
     fetchData();
@@ -58,6 +58,7 @@ export default function WeeklyReportPage() {
   const kpis = calculateKPIs(data);
   const workerStats = calculateWorkerStats(data);
   const lineStats = calculateLineStats(data);
+  const bestPerformers = findBestPerformers(workerStats, 3);
 
   const handleExport = () => {
     exportProductionToExcel(data, `weekly_report_${startOfWeek.format('YYYYMMDD')}_${endOfWeek.format('YYYYMMDD')}`);
@@ -251,6 +252,36 @@ export default function WeeklyReportPage() {
               </Card>
             </Col>
           </Row>
+
+          {/* 최고 성과자 */}
+          <Card title={t('best_performer')}>
+            <Row gutter={[16, 16]}>
+              {[0, 1, 2].map((index) => {
+                const performer = bestPerformers[index];
+                return (
+                  <Col xs={24} md={8} key={index}>
+                    <div className={`p-6 rounded-lg text-center min-h-[160px] flex flex-col justify-center ${index === 0 ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'}`}>
+                      {performer ? (
+                        <>
+                          <span className="text-4xl">{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</span>
+                          <h4 className="font-bold mt-3 text-xl">{performer.worker}</h4>
+                          <p className="text-gray-600 text-lg">{performer.line}</p>
+                          <p className="text-2xl font-bold text-blue-600 mt-2">
+                            {performer.achievementRate.toFixed(1)}%
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-4xl">{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</span>
+                          <p className="text-gray-400 mt-3 text-lg">-</p>
+                        </>
+                      )}
+                    </div>
+                  </Col>
+                );
+              })}
+            </Row>
+          </Card>
 
           {/* 라인별 생산량 */}
           <Card title={t('line_stats')}>

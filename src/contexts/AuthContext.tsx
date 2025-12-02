@@ -20,21 +20,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 세션 복원
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser) as User;
-        setState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-          isAdmin: true, // 모든 사용자에게 관리자 권한 부여
-        });
-      } catch {
-        localStorage.removeItem('user');
+    try {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          const user = JSON.parse(savedUser) as User;
+          setState({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            isAdmin: true, // 모든 사용자에게 관리자 권한 부여
+          });
+        } catch {
+          localStorage.removeItem('user');
+          setState(prev => ({ ...prev, isLoading: false }));
+        }
+      } else {
         setState(prev => ({ ...prev, isLoading: false }));
       }
-    } else {
+    } catch {
+      // localStorage 접근 불가 (시크릿 모드 등)
       setState(prev => ({ ...prev, isLoading: false }));
     }
   }, []);
@@ -51,7 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok && data.user) {
         const user = data.user as User;
-        localStorage.setItem('user', JSON.stringify(user));
+        try {
+          localStorage.setItem('user', JSON.stringify(user));
+        } catch {
+          // localStorage 접근 불가
+        }
         setState({
           user,
           isAuthenticated: true,
@@ -68,7 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('user');
+    try {
+      localStorage.removeItem('user');
+    } catch {
+      // localStorage 접근 불가
+    }
     setState({
       user: null,
       isAuthenticated: false,

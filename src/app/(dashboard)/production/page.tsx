@@ -410,8 +410,8 @@ export default function ProductionPage() {
               >
                 <Select showSearch placeholder={t('select_model')} optionFilterProp="children">
                   {models.map((m) => (
-                    <Select.Option key={m.model} value={m.model}>
-                      {m.model}
+                    <Select.Option key={`${m.model}-${m.process}`} value={`${m.model} (${m.process})`}>
+                      {m.model} ({m.process})
                     </Select.Option>
                   ))}
                 </Select>
@@ -537,10 +537,10 @@ export default function ProductionPage() {
                 </Select>
               </Form.Item>
               <Form.Item name="model" label={t('model')}>
-                <Select>
+                <Select showSearch optionFilterProp="children">
                   {models.map((m) => (
-                    <Select.Option key={m.model} value={m.model}>
-                      {m.model}
+                    <Select.Option key={`${m.model}-${m.process}`} value={`${m.model} (${m.process})`}>
+                      {m.model} ({m.process})
                     </Select.Option>
                   ))}
                 </Select>

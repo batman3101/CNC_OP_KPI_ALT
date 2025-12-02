@@ -22,15 +22,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 로컬 스토리지에서 언어 복원
-    const savedLang = localStorage.getItem('language') as Language;
-    if (savedLang && (savedLang === 'ko' || savedLang === 'vi')) {
-      setLanguageState(savedLang);
+    try {
+      const savedLang = localStorage.getItem('language') as Language;
+      if (savedLang && (savedLang === 'ko' || savedLang === 'vi')) {
+        setLanguageState(savedLang);
+      }
+    } catch {
+      // localStorage 접근 불가
     }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('language', lang);
+    try {
+      localStorage.setItem('language', lang);
+    } catch {
+      // localStorage 접근 불가
+    }
   };
 
   const t = (key: string): string => {
