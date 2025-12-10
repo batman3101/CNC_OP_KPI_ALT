@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 export async function PUT(
   request: NextRequest,
@@ -9,7 +9,7 @@ export async function PUT(
     const body = await request.json();
     const { employeeId, name, department, lineNumber } = body;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('Workers')
       .update({
         사번: employeeId,
@@ -20,7 +20,13 @@ export async function PUT(
       .eq('id', params.id)
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json(data[0]);
   } catch (error) {
@@ -37,12 +43,18 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('Workers')
       .delete()
       .eq('id', params.id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json({ message: 'Worker deleted successfully' });
   } catch (error) {

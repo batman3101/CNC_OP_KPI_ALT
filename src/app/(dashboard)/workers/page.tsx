@@ -68,14 +68,18 @@ export default function WorkersPage() {
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         message.success(t('worker') + ' ' + t('registered'));
         form.resetFields();
         fetchWorkers();
       } else {
-        throw new Error('Failed to save');
+        console.error('Worker creation failed:', data);
+        throw new Error(data.error || 'Failed to save');
       }
     } catch (error) {
+      console.error('Worker submit error:', error);
       message.error(t('worker_data_save_error'));
     }
   };
@@ -124,7 +128,19 @@ export default function WorkersPage() {
     }
   };
 
-  const lines = Array.from(new Set(workers.map((w) => w.라인번호))).sort();
+  // A-01 ~ A-70, B-01 ~ B-70 라인 생성
+  const generateAllLines = () => {
+    const allLines: string[] = [];
+    ['A', 'B'].forEach(prefix => {
+      for (let i = 1; i <= 70; i++) {
+        allLines.push(`${prefix}-${i.toString().padStart(2, '0')}`);
+      }
+    });
+    return allLines;
+  };
+
+  const allLines = generateAllLines();
+  const existingLines = Array.from(new Set(workers.map((w) => w.라인번호))).sort();
 
   // 검색 기능
   const handleSearch = (
@@ -202,8 +218,8 @@ export default function WorkersPage() {
       ),
   });
 
-  // 필터 옵션
-  const lineFilters = lines.map((line) => ({ text: line, value: line }));
+  // 필터 옵션 (테이블에서는 기존 라인만 필터로 표시)
+  const lineFilters = existingLines.map((line) => ({ text: line, value: line }));
   const departmentFilters = Array.from(new Set(workers.map((w) => w.부서).filter(Boolean))).map((dept) => ({
     text: dept,
     value: dept,
@@ -342,23 +358,18 @@ export default function WorkersPage() {
                 label={t('line_number')}
                 rules={[{ required: true }]}
               >
-                <Select placeholder={t('select_line')}>
-                  {lines.length > 0 ? (
-                    lines.map((line) => (
-                      <Select.Option key={line} value={line}>
-                        {line}
-                      </Select.Option>
-                    ))
-                  ) : (
-                    <>
-                      <Select.Option value="B-01">B-01</Select.Option>
-                      <Select.Option value="B-02">B-02</Select.Option>
-                      <Select.Option value="B-03">B-03</Select.Option>
-                      <Select.Option value="B-04">B-04</Select.Option>
-                      <Select.Option value="B-05">B-05</Select.Option>
-                      <Select.Option value="B-06">B-06</Select.Option>
-                    </>
-                  )}
+                <Select
+                  placeholder={t('select_line')}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {allLines.map((line) => (
+                    <Select.Option key={line} value={line}>
+                      {line}
+                    </Select.Option>
+                  ))}
                 </Select>
               </Form.Item>
             </div>
@@ -396,8 +407,13 @@ export default function WorkersPage() {
                 <Input />
               </Form.Item>
               <Form.Item name="lineNumber" label={t('line_number')}>
-                <Select>
-                  {lines.map((line) => (
+                <Select
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                  }
+                >
+                  {allLines.map((line) => (
                     <Select.Option key={line} value={line}>
                       {line}
                     </Select.Option>

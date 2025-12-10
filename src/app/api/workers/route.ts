@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/client';
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('Workers')
       .select('*')
       .order('이름', { ascending: true });
@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { employeeId, name, department, lineNumber } = body;
 
-    const { data, error } = await supabase
+    console.log('Creating worker with data:', { employeeId, name, department, lineNumber });
+
+    const { data, error } = await supabaseAdmin
       .from('Workers')
       .insert([
         {
@@ -37,13 +39,20 @@ export async function POST(request: NextRequest) {
       ])
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json(
+        { error: error.message, details: error },
+        { status: 400 }
+      );
+    }
 
+    console.log('Worker created successfully:', data);
     return NextResponse.json(data[0]);
   } catch (error) {
     console.error('Error creating worker:', error);
     return NextResponse.json(
-      { error: 'Failed to create worker' },
+      { error: 'Failed to create worker', details: String(error) },
       { status: 500 }
     );
   }
